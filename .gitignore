@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Virtual environment
+env/
+venv/
+ENV/
+.venv/
+.ENV/
+
+# Flask
+instance/
+*.log
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# MySQL credentials
+config.py
+
+# Matplotlib cache
+.matplotlib/
+
+# Cache files
+*.cache
+*.egg-info/
+*.egg
+
+# Plot images
+/static/forecast.png
