@@ -7,6 +7,7 @@ from xgboost import XGBRegressor
 from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime
 import requests
+import os
 
 app = Flask(__name__)
 
@@ -41,7 +42,7 @@ def predict_future(model, last_sequence, days, scaler):
     return scaler.inverse_transform(np.array(future).reshape(-1, 1))
 
 def fetch_stock_news(ticker):
-    api_key = "0a0e85a371d647868ab1a8493229a000"
+    api_key = os.getenv("NEWSAPI_KEY")
     query = f"{ticker} stock"
     url = f"https://newsapi.org/v2/everything?q={query}&sortBy=publishedAt&language=en&pageSize=5&apiKey={api_key}"
     try:
