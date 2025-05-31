@@ -13,6 +13,8 @@ app = Flask(__name__)
 
 def get_live_data(ticker, n_lags=60):
     df = yf.download(ticker, period="2y")
+    if df.empty or 'Close' not in df.columns:
+        raise ValueError(f"Failed to retrieve valid data for {ticker}. Please try another stock or try again later.")
     df = df.reset_index()
     close_prices = df[['Close']].values
 
@@ -63,33 +65,48 @@ def fetch_stock_news(ticker):
 @app.route("/", methods=["GET", "POST"])
 def index():
     ticker = request.form.get("stock", "META")
-    X, y, scaler, df = get_live_data(ticker)
-    model = train_model(X, y)
-    last_seq = X[-1]
-    forecast = predict_future(model, last_seq, 7, scaler)
-    future_dates = pd.date_range(df['Date'].iloc[-1] + pd.Timedelta(days=1), periods=7)
     today = datetime.today().strftime("%Y-%m-%d")
-    news = fetch_stock_news(ticker)
+    news = []
+    forecast = []
 
-    # 📉 Enhanced Chart Styling
-    plt.style.use('seaborn-v0_8-muted')
-    fig, ax = plt.subplots(figsize=(8, 3))
-    ax.plot(future_dates, forecast, marker='o', color='#2E7D32', linewidth=2.5, label="Forecast")
-    ax.set_title(f"{ticker} 7-Day Stock Forecast", fontsize=14, fontweight='bold')
-    ax.set_xlabel("Date")
-    ax.set_ylabel("Predicted Price")
-    ax.grid(True, linestyle='--', alpha=0.6)
-    ax.legend(loc='upper left')
-    plt.xticks(rotation=30)
-    plt.tight_layout()
-    plt.savefig("static/forecast.png", bbox_inches='tight', dpi=120)
-    plt.close()
+    try:
+        X, y, scaler, df = get_live_data(ticker)
+        model = train_model(X, y)
+        last_seq = X[-1]
+        forecast = predict_future(model, last_seq, 7, scaler)
+        future_dates = pd.date_range(df['Date'].iloc[-1] + pd.Timedelta(days=1), periods=7)
+        forecast = list(zip(future_dates.strftime("%Y-%m-%d"), forecast.flatten()))
+
+        # 📉 Chart
+        plt.style.use('seaborn-v0_8-muted')
+        fig, ax = plt.subplots(figsize=(8, 3))
+        ax.plot(future_dates, [p[1] for p in forecast], marker='o', color='#2E7D32', linewidth=2.5, label="Forecast")
+        ax.set_title(f"{ticker} 7-Day Stock Forecast", fontsize=14, fontweight='bold')
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Predicted Price")
+        ax.grid(True, linestyle='--', alpha=0.6)
+        ax.legend(loc='upper left')
+        plt.xticks(rotation=30)
+        plt.tight_layout()
+        plt.savefig("static/forecast.png", bbox_inches='tight', dpi=120)
+        plt.close()
+
+        news = fetch_stock_news(ticker)
+
+    except ValueError as e:
+        return render_template("index.html",
+                               stock=ticker,
+                               forecast=[],
+                               today=today,
+                               news=[],
+                               error=str(e))
 
     return render_template("index.html",
                            stock=ticker,
-                           forecast=list(zip(future_dates.strftime("%Y-%m-%d"), forecast.flatten())),
+                           forecast=forecast,
                            today=today,
-                           news=news)
+                           news=news,
+                           error=None)
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -138,6 +138,12 @@
 </head>
 <body>
     <div class="container">
+        {% if error %}
+<div class="card" style="color: red; font-weight: bold; font-size: 16px;">
+  ⚠️ {{ error }}
+</div>
+{% endif %}
+
 
         <!-- 🔥 Cool Header Section -->
         <div class="header">
