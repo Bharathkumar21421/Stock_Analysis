@@ -10,6 +10,7 @@ import requests
 import os
 
 app = Flask(__name__)
+NEWS_API_KEY = "0a0e85a371d647868ab1a8493229a000"
 
 def get_live_data(ticker, n_lags=60):
     df = yf.download(ticker, period="2y")
@@ -44,9 +45,8 @@ def predict_future(model, last_sequence, days, scaler):
     return scaler.inverse_transform(np.array(future).reshape(-1, 1))
 
 def fetch_stock_news(ticker):
-    api_key = os.getenv("NEWSAPI_KEY")
     query = f"{ticker} stock"
-    url = f"https://newsapi.org/v2/everything?q={query}&sortBy=publishedAt&language=en&pageSize=5&apiKey={api_key}"
+    url = f"https://newsapi.org/v2/everything?q={query}&sortBy=publishedAt&language=en&pageSize=5&apiKey={NEWS_API_KEY}"
     try:
         res = requests.get(url)
         data = res.json()
@@ -77,7 +77,6 @@ def index():
         future_dates = pd.date_range(df['Date'].iloc[-1] + pd.Timedelta(days=1), periods=7)
         forecast = list(zip(future_dates.strftime("%Y-%m-%d"), forecast.flatten()))
 
-        # 📉 Chart
         plt.style.use('seaborn-v0_8-muted')
         fig, ax = plt.subplots(figsize=(8, 3))
         ax.plot(future_dates, [p[1] for p in forecast], marker='o', color='#2E7D32', linewidth=2.5, label="Forecast")
